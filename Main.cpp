@@ -72,7 +72,6 @@ int main()
 		printf("Differnce: %f\n\n", std::abs(TestCases3.second[i] - RecResult));
 	}
 }
-}
 
 void PrintFloatVector(std::vector<float> vec)
 {
