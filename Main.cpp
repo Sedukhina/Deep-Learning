@@ -54,8 +54,24 @@ int main()
 
 		float RecResult = PNN.Recognise(TestCases2.first[i]);
 		printf("Recognition result = %f\n", RecResult);
-		printf("Differnce: %f\n\n", std::abs(TestCases1.second[i] - RecResult));
+		printf("Differnce: %f\n\n", std::abs(TestCases2.second[i] - RecResult));
 	}
+
+	printf("\n\nTesting Cases out of range\n");
+
+	std::pair<std::vector<std::vector<float>>, std::vector<float>> TestCases3 = GenerateWeightsSumFunc(2, 10, 150, 300, true);
+
+	for (size_t i = 0; i < TestCases3.first.size(); i++)
+	{
+		printf("Case %i: ", i);
+		PrintFloatVector(TestCases3.first[i]);
+		printf("-> %f\n", TestCases3.second[i]);
+
+		float RecResult = PNN.Recognise(TestCases3.first[i]);
+		printf("Recognition result = %f\n", RecResult);
+		printf("Differnce: %f\n\n", std::abs(TestCases3.second[i] - RecResult));
+	}
+}
 }
 
 void PrintFloatVector(std::vector<float> vec)
