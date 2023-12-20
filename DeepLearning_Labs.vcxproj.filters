@@ -51,4 +51,8 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\KDD_test.csv" />
+    <None Include="Data\KDD_train.csv" />
+  </ItemGroup>
 </Project>

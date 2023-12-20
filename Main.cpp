@@ -3,6 +3,12 @@
 #include <utility>
 #include <random>
 
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <vector>
+
 #include "Neuron.h"
 #include "Perceptron.h"
 #include "InputFunctions.h"
@@ -10,67 +16,33 @@
 #include "CPNN.h"
 
 inline void PrintFloatVector(std::vector<float> vec);
+inline bool IsNumber(const std::string& s);
+const std::pair < std::vector<std::vector<float>>, std::vector<float>> ReadKDD(std::string path);
 std::pair < std::vector<std::vector<float>>, std::vector<float>> GenerateWeightsSumFunc(unsigned int InputLayerSize, unsigned int Amount, float Min, float Max, bool Round = false);
+
 
 int main() 
 {
 	printf("Probabilistic neural network\n");
-	std::pair<std::vector<std::vector<float>>, std::vector<float>> Input = GenerateWeightsSumFunc(2, 1000, 20, 120, true);
-
-	for (size_t i = 0; i < Input.first.size(); i++)
-	{
-		printf("Learning Case %i: ", i);
-		PrintFloatVector(Input.first[i]);
-		printf("-> %f\n", Input.second[i]);
-	}
-
+	std::pair<std::vector<std::vector<float>>, std::vector<float>> Input = ReadKDD("Data//KDD_train.csv");
 	CPNN PNN = CPNN(Input);
 
+	int Right = 0;
+	int Wrong = 0;
 
-	printf("\n\nTesting Cases in same range\n");
-
-	std::pair<std::vector<std::vector<float>>, std::vector<float>> TestCases1 = GenerateWeightsSumFunc(2, 10, 20, 120, true);
-
-	for (size_t i = 0; i < TestCases1.first.size(); i++)
+	std::pair<std::vector<std::vector<float>>, std::vector<float>> TestData = ReadKDD("Data//KDD_test.csv");
+	for (size_t i = 0; i < TestData.first.size(); i++)
 	{
-		printf("Case %i: ", i);
-		PrintFloatVector(TestCases1.first[i]);
-		printf("-> %f\n", TestCases1.second[i]);
-
-		float RecResult = PNN.Recognise(TestCases1.first[i]);
-		printf("Recognition result = %f\n", RecResult);
-		printf("Differnce: %f\n\n", std::abs(TestCases1.second[i]-RecResult));
+		if (PNN.Recognise(TestData.first[i]) == TestData.second[i])
+		{
+			Right++;
+		}
+		else
+		{
+			Wrong++;
+		}
 	}
-
-	printf("\n\nTesting Cases in wider range\n");
-
-	std::pair<std::vector<std::vector<float>>, std::vector<float>> TestCases2 = GenerateWeightsSumFunc(2, 10, 0, 200, true);
-
-	for (size_t i = 0; i < TestCases2.first.size(); i++)
-	{
-		printf("Case %i: ", i);
-		PrintFloatVector(TestCases2.first[i]);
-		printf("-> %f\n", TestCases2.second[i]);
-
-		float RecResult = PNN.Recognise(TestCases2.first[i]);
-		printf("Recognition result = %f\n", RecResult);
-		printf("Differnce: %f\n\n", std::abs(TestCases2.second[i] - RecResult));
-	}
-
-	printf("\n\nTesting Cases out of range\n");
-
-	std::pair<std::vector<std::vector<float>>, std::vector<float>> TestCases3 = GenerateWeightsSumFunc(2, 10, 150, 300, true);
-
-	for (size_t i = 0; i < TestCases3.first.size(); i++)
-	{
-		printf("Case %i: ", i);
-		PrintFloatVector(TestCases3.first[i]);
-		printf("-> %f\n", TestCases3.second[i]);
-
-		float RecResult = PNN.Recognise(TestCases3.first[i]);
-		printf("Recognition result = %f\n", RecResult);
-		printf("Differnce: %f\n\n", std::abs(TestCases3.second[i] - RecResult));
-	}
+	printf("Right: %i\nWrong: %i\n", Right, Wrong);
 }
 
 void PrintFloatVector(std::vector<float> vec)
@@ -79,6 +51,47 @@ void PrintFloatVector(std::vector<float> vec)
 	{
 		printf("%f; ", vec[i]);
 	}
+}
+
+const std::pair<std::vector<std::vector<float>>, std::vector<float>> ReadKDD(std::string path)
+{
+	std::string filename{ path };
+	std::ifstream input{ filename };
+
+	if (!input.is_open()) {
+		std::cerr << "Couldn't read file: " << filename << "\n";
+		return { {}, {} };
+	}
+
+	//std::vector<std::vector<float>, float> csvRows;
+	std::pair < std::vector<std::vector<float>>, std::vector<float>> Data;
+
+	for (std::string line; std::getline(input, line);) 
+	{
+		std::istringstream ss(std::move(line));
+		std::vector<float> row;
+		if (!Data.first.empty()) {
+			// We expect each row to be as big as the first row
+			row.reserve(Data.first.front().size());
+		}
+		if (line.find("teardrop") != std::string::npos)
+		{
+			Data.second.push_back(1);
+			printf("1");
+		}
+		else
+		{
+			Data.second.push_back(0);
+		}
+		// std::getline can split on other characters, here we use ','
+		for (std::string value; std::getline(ss, value, ',');) {
+			if (IsNumber(value))
+				row.push_back(std::stof(value));
+		}
+		Data.first.push_back(std::move(row));
+	}
+	printf("\n");
+	return Data;
 }
 
 std::pair<std::vector<std::vector<float>>, std::vector<float>> GenerateWeightsSumFunc(unsigned int InputAmount, unsigned int Amount, float Min, float Max, bool Round)
@@ -107,4 +120,11 @@ std::pair<std::vector<std::vector<float>>, std::vector<float>> GenerateWeightsSu
 		Results.push_back(Sum);
 	}
 	return std::make_pair(Inputs, Results);
+}
+
+bool IsNumber(const std::string& s)
+{
+	std::string::const_iterator it = s.begin();
+	while (it != s.end() && std::isdigit(*it)) ++it;
+	return !s.empty() && it == s.end();
 }
